@@ -1,9 +1,10 @@
 import argparse
 import os
+import time
 from dotenv import load_dotenv
 import pandas as pd
 import tweepy
-import time
+
 
 load_dotenv()
 
@@ -14,7 +15,6 @@ TWITTER_ACCESS_KEY = os.getenv('TWITTER_ACCESS_KEY')
 TWITTER_ACCESS_SECRET = os.getenv('TWITTER_ACCESS_SECRET')
 
 
-        
 def create_query(filename):
     """
     Converts a text file of newline-separated Twitter search phrases into a
@@ -53,33 +53,33 @@ def print_tweet(i, ith_tweet):
     ----------
     i : int
         Number of tweet you want to print.
-    ith_tweet : list
-        List of the following data retrieved using Tweepy:
-            [username, description, location, following,
-             followers, totaltweets, retweetcount, text, hashtext]
+    ith_tweet : dictionary
+        Dictionary of the following data retrieved using Tweepy:
+        username, description, location, following,
+        followers, totaltweets, retweetcount, text, hashtext
 
     Returns
     -------
     None.
 
     """
-    
+
     print(f"""
 Tweet {i}:
-Username:{ith_tweet[0]}
-Date:{ith_tweet[1]}
-Description:{ith_tweet[2]}
-Location:{ith_tweet[3]}
-Following Count:{ith_tweet[4]}
-Follower Count:{ith_tweet[5]}
-Total Tweets:{ith_tweet[6]}
-Retweet Count:{ith_tweet[7]}
-Tweet Text:{ith_tweet[8]}
-Hashtags Used:{ith_tweet[9]}
+Username:{ith_tweet["username"]}
+Date:{ith_tweet["date"]}
+Description:{ith_tweet["description"]}
+Location:{ith_tweet["location"]}
+Following Count:{ith_tweet["following"]}
+Follower Count:{ith_tweet["followers"]}
+Total Tweets:{ith_tweet["totaltweets"]}
+Retweet Count:{ith_tweet["retweetcount"]}
+Tweet Text:{ith_tweet["text"]}
+Hashtags Used:{ith_tweet["hashtext"]}
 """)
 
 
-    
+
 def limit_handled(cursor):
     """
     Yields the next tweet retrieved by the cursor, but handles the RateLimitError
@@ -105,13 +105,45 @@ def limit_handled(cursor):
         except StopIteration:
             return
 
-  
+
+def clean_write(df, filename):
+    """
+    Converts following, followers, totaltweets, and retweetcount columns to int,
+    and then writes the dataframe to a pickle file.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame created by scraping tweets.
+    filename : str
+        Name of output file.
+
+    Returns
+    -------
+    None.
+
+    """
+    print('\n\n--------------------------------------------------------------------------------')
+    print('Printing dataframe details:')
+    print(df.head())
+    print(df.info())
+    
+    # Certain columns need to be converted to int
+    cols = ["following", "followers", "totaltweets", "retweetcount"]
+    df[cols] = df[cols].astype("int")
+    print('\n\nConverted int columns:')
+    print(df.info())
+    
+    # Writing to pickle file
+    path = 'data/' + filename
+    df.to_pickle(path)
+
 
 def scrape(phrases_filename, date_since, numtweet):
     """
     Uses Tweepy API to search for tweets since a given date that use given
     particular phrases and then creates a csv file with the following data:
-        username, date, description, location, following, followers, 
+        username, date, description, location, following, followers,
         totaltweets, retweetcount, text, hashtags
 
     Parameters
@@ -131,72 +163,70 @@ def scrape(phrases_filename, date_since, numtweet):
     # Creating Tweepy query version of search phrases
     search_phrases = create_query(phrases_filename)
 
-      
+
     # Creating DataFrame using pandas
-    db = pd.DataFrame(columns=['username', 'date', 'description', 'location', 'following',
+    df = pd.DataFrame(columns=['username', 'date', 'description', 'location', 'following',
                                'followers', 'totaltweets', 'retweetcount', 'text', 'hashtags'])
-      
+
     # We are using .Cursor() to search through twitter for the required tweets.
     # The number of tweets can be restricted using .items(number of tweets)
-    if numtweet == None:
+    if numtweet is None:
         tweets = tweepy.Cursor(api.search, q=search_phrases, lang="en",
                                since=date_since, tweet_mode='extended').items()
     else:
         tweets = tweepy.Cursor(api.search, q=search_phrases, lang="en",
                                since=date_since, tweet_mode='extended').items(numtweet)
-     
-      
+
     # Counter to maintain Tweet Count
-    i = 1  
-      
-    # We will iterate over each tweet in the list to extract information about each tweet
+    i = 1
+    
+    # Iterate over each tweet in the list to extract information about each tweet
     for tweet in limit_handled(tweets):
-        username = tweet.user.screen_name
-        date = tweet.created_at
-        description = tweet.user.description
-        location = tweet.user.location
-        following = tweet.user.friends_count
-        followers = tweet.user.followers_count
-        totaltweets = tweet.user.statuses_count
-        retweetcount = tweet.retweet_count
-        text = tweet.full_text
-        hashtags = tweet.entities['hashtags']
-          
         # Getting hashtags into a list
+        hashtags = tweet.entities['hashtags']
         hashtext = list()
         for j in range(0, len(hashtags)):
             hashtext.append(hashtags[j]['text'])
-          
+        
+        tweet_data = {
+            "username" : tweet.user.screen_name,
+            "date" : tweet.created_at,
+            "description" : tweet.user.description,
+            "location" : tweet.user.location,
+            "following" : tweet.user.friends_count,
+            "followers" : tweet.user.followers_count,
+            "totaltweets" : tweet.user.statuses_count,
+            "retweetcount" : tweet.retweet_count,
+            "text" : tweet.full_text,
+            "hashtext" : hashtext
+        }
+        
         # Here we are appending all the extracted information in the DataFrame
-        ith_tweet = [username, date, description, location, following,
-                     followers, totaltweets, retweetcount, text, hashtext]
-        db.loc[len(db)] = ith_tweet
-          
+        df = df.append(tweet_data, ignore_index=True)
+        
         # Printing tweet data for every 10th tweet
         if i % 10 == 0:
-            print_tweet(i, ith_tweet)
+            print_tweet(i, tweet_data)
         i = i+1
-    
-      
-    # We will save our database as a CSV file.
-    filename = 'scraped_tweets.csv'
-    db.to_csv(filename, index=False)
 
     
+    # Saving our dataframe as a pickle file
+    clean_write(df, 'scraped_tweets.pkl')
 
-  
+
+
+
 if __name__ == '__main__':
-    
     # Setting up arguments
     parser = argparse.ArgumentParser()
     parser.add_argument("--search_phrases_file", type=str,
                         default="search_phrases.txt",
                         help="Text file of the hashtags/phrases you want to search for")
     parser.add_argument("--date", type=str,
-                        default="2021-04-26",######################################### CHANGE TO THE 28th
+                        default="2021-04-26",#################################### CHANGE TO THE 28th
                         help="Starting date for tweet search")
     parser.add_argument("--num_tweets", type=int,
-                        default=None,################################################# possibly change
+                        default=None,############################################### possibly change
                         help="Number of tweets to search for")
     args = parser.parse_args()
 
@@ -208,4 +238,3 @@ if __name__ == '__main__':
     api = tweepy.API(auth)
     
     scrape(args.search_phrases_file, args.date, args.num_tweets)
-    print('Scraping has completed!')
