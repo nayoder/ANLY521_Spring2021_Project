@@ -1,6 +1,7 @@
-#sotu
-#sotu2021
-#sotu21
-#stateoftheunion
-#stateoftheunion2021
-#stateoftheunion21
+#jointaddress
+#jointsession
+#presidentialaddress
+#bidenaddress
+sotu
+"state of the union"
+"joint address"

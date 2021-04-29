@@ -162,6 +162,8 @@ def scrape(phrases_filename, date_since, numtweet):
     """
     # Creating Tweepy query version of search phrases
     search_phrases = create_query(phrases_filename)
+    print("Searching for tweets using the following query:")
+    print(search_phrases)
 
 
     # Creating DataFrame using pandas
@@ -222,8 +224,8 @@ if __name__ == '__main__':
     parser.add_argument("--search_phrases_file", type=str,
                         default="search_phrases.txt",
                         help="Text file of the hashtags/phrases you want to search for")
-    parser.add_argument("--date", type=str,
-                        default="2021-04-26",#################################### CHANGE TO THE 28th
+    parser.add_argument("--date_since", type=str,
+                        default="2021-04-28",
                         help="Starting date for tweet search")
     parser.add_argument("--num_tweets", type=int,
                         default=None,############################################### possibly change
@@ -235,6 +237,6 @@ if __name__ == '__main__':
     # into the .env file
     auth = tweepy.OAuthHandler(TWITTER_CONSUMER_KEY, TWITTER_CONSUMER_SECRET)
     auth.set_access_token(TWITTER_ACCESS_KEY, TWITTER_ACCESS_SECRET)
-    api = tweepy.API(auth)
+    api = tweepy.API(auth, wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
     
-    scrape(args.search_phrases_file, args.date, args.num_tweets)
+    scrape(args.search_phrases_file, args.date_since, args.num_tweets)
