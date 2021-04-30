@@ -172,7 +172,7 @@ def scrape(phrases_filename, date_since, date_until, numtweet):
 
     # Creating DataFrame using pandas
     df = pd.DataFrame(columns=['username', 'date', 'description', 'location', 'following',
-                               'followers', 'totaltweets', 'retweetcount', 'text', 'hashtags'])
+                               'followers', 'totaltweets', 'retweetcount', 'text', 'hashtext'])
 
     # We are using .Cursor() to search through twitter for the required tweets.
     # The number of tweets can be restricted using .items(number of tweets)
