@@ -47,5 +47,8 @@ if __name__ == '__main__':
 
     # Converting timezone and filtering by start/end datetimes
     data = clean_time(args.timezone, args.start_datetime, args.end_datetime)
+    
+    
+    data.to_csv('data/cleaned_tweets.csv', index=False)
 
 
