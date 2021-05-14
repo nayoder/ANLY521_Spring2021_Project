@@ -177,7 +177,7 @@ def pp_sts(sts_ents):
     # Writing to CSV
     sts_df = pd.DataFrame(list(zip(sts_ids, sts_tokens_pos, sts_labels)),
                columns =['id', 'tokens_pos', 'label'])
-    sts_df.to_csv(data_path + 'sts_tokenized.csv', index=False)
+    sts_df.to_pickle(data_path + 'sts_tokenized.pkl')
 
 
 def pp_js(js_ents):
@@ -201,7 +201,7 @@ def pp_js(js_ents):
     # Writing to CSV
     js_df = pd.DataFrame(list(zip(js_ids, js_tokens_pos)),
                columns =['id', 'tokens_pos'])
-    js_df.to_csv(data_path + 'js_tokenized.csv', index=False)
+    js_df.to_pickle(data_path + 'js_tokenized.pkl')
     
 
 
