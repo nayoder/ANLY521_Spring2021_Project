@@ -1,3 +1,7 @@
+# Monken and Yoder
+# Preprocessing STS and JS Tweets
+# May 17, 2021
+
 import argparse
 import re
 import pandas as pd
@@ -5,6 +9,7 @@ from nltk.tokenize import TweetTokenizer
 import nltk
 import demoji
 
+data_path = '../../data/'
 
 def username_list(filename):
     """
@@ -65,7 +70,7 @@ def read_sts(data_file):
     Parameters
     ----------
     data_file : str
-        Should be 'data/sts_gold_tweet.csv'
+        Should be 'sts_gold_tweet.csv'
 
     Returns
     -------
@@ -99,7 +104,7 @@ def read_js(data_file):
     Parameters
     ----------
     data_file : str
-        Should be 'data/cleaned_tweets.csv'
+        Should be 'js_tweets.csv'
 
     Returns
     -------
@@ -166,13 +171,13 @@ def pp_sts(sts_ents):
 
     """
     # Reading data
-    sts_ids, sts_labels, sts_texts = read_sts('data/sts_gold_tweet.csv')
+    sts_ids, sts_labels, sts_texts = read_sts(data_path + 'sts_gold_tweet.csv')
     # Preprocessing tweets
     sts_tokens_pos = preprocess(sts_texts, sts_ents)
     # Writing to CSV
     sts_df = pd.DataFrame(list(zip(sts_ids, sts_tokens_pos, sts_labels)),
                columns =['id', 'tokens_pos', 'label'])
-    sts_df.to_csv('data/sts_tokenized.csv', index=False)
+    sts_df.to_csv(data_path + 'sts_tokenized.csv', index=False)
 
 
 def pp_js(js_ents):
@@ -190,13 +195,13 @@ def pp_js(js_ents):
 
     """
     # Reading data
-    js_ids, js_texts = read_js('data/cleaned_tweets.csv') 
+    js_ids, js_texts = read_js(data_path + 'js_tweets.csv') 
     # Preprocessing tweets for each dataset
     js_tokens_pos = preprocess(js_texts, js_ents)
     # Writing to CSV
     js_df = pd.DataFrame(list(zip(js_ids, js_tokens_pos)),
                columns =['id', 'tokens_pos'])
-    js_df.to_csv('data/js_tokenized.csv', index=False)
+    js_df.to_csv(data_path + 'js_tokenized.csv', index=False)
     
 
 
@@ -214,7 +219,7 @@ if __name__ == '__main__':
                         help="Text file of the @usernames of entities (sts_usernames.txt or js_usernames.txt")
     args = parser.parse_args()
     
-    ######################################################## These entities need to be added to
+    # Getting entities from sts_usernames.txt or js_usernames.txt
     ents = username_list(args.usernames_file)
     
     if args.data == 'sts':

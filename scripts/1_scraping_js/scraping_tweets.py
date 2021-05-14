@@ -1,12 +1,17 @@
+# Monken and Yoder
+# Scraping Joint Session Tweets
+# based on code from here - https://www.geeksforgeeks.org/extracting-tweets-containing-a-particular-hashtag-using-python/
+# May 17, 2021
+
 import argparse
 import os
 from dotenv import load_dotenv
 import pandas as pd
 import tweepy
 
+data_path = '../../data/'
 
 load_dotenv()
-
 # Put these variables in a .env file in the parent directory
 TWITTER_CONSUMER_KEY = os.getenv('TWITTER_CONSUMER_KEY')
 TWITTER_CONSUMER_SECRET = os.getenv('TWITTER_CONSUMER_SECRET')
@@ -135,7 +140,7 @@ def clean_write(df, filename):
     print(df.info())
     
     # Writing to pickle file
-    path = 'data/' + filename
+    path = data_path + filename
     df.to_pickle(path)
 
 
@@ -235,7 +240,7 @@ if __name__ == '__main__':
                         help="Starting date for tweet search")
     parser.add_argument('--date_until', type=str,
                         default='2021-04-30',
-                        help="Starting date for tweet search")
+                        help="Ending date for tweet search")
     parser.add_argument('--num_tweets', type=int,
                         default=None,
                         help="Number of tweets to search for")

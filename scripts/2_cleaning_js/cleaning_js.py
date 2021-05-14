@@ -1,6 +1,11 @@
+# Monken and Yoder
+# Cleaning Joint Session Tweet Data
+# May 17, 2021
+
 import argparse
 import pandas as pd
 
+data_path = '../../data/'
 
 def clean_time(tz, start, end):
     """
@@ -23,7 +28,7 @@ def clean_time(tz, start, end):
         Converted data
 
     """
-    df = pd.read_pickle('data/scraped_tweets.pkl')
+    df = pd.read_pickle(data_path + 'scraped_tweets.pkl')
     # Twitter data is originally in UTC
     df['date'] = df['date'].dt.tz_localize('UTC')
     df['date'] = df['date'].dt.tz_convert(tz)
@@ -49,6 +54,6 @@ if __name__ == '__main__':
     data = clean_time(args.timezone, args.start_datetime, args.end_datetime)
     
     
-    data.to_csv('data/cleaned_tweets.csv', index=False)
+    data.to_csv(data_path + 'js_tweets.csv', index=False)
 
 
