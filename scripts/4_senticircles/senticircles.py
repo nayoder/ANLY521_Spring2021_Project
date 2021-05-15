@@ -11,10 +11,28 @@ from math import exp, expm1, log, log10
 import numpy as np
 import turtle
 from sklearn import preprocessing
+import pandas as pd
 
-def get_TDOC(lines, key):
+def get_TDOC(lines, key, prohib):
+    """
+    Reads corpus of text, one line per entry and outputs term document correlation
+
+    Parameters
+    ----------
+    lines : list of strings
+        Corpus of text, one line per item
+    key : string
+        Word of focus
+    prohib: list of strings
+        words we do not want included in context terms
+
+    Returns
+    -------
+    norm_radii : dict
+        Dictionary of context terms and their TDOC to the key, which is the radius of the senticircle
+
+    """
     freq = {}
-    prohib = ['you', 'have', 'a', 'i', 'am', 'this', 'will', 'on', 'me', 'to', 'all', 'us', 'has', 'of', '99']
     for words in lines:
         if key in words:
             for context in words:
@@ -40,6 +58,20 @@ def get_TDOC(lines, key):
 
 
 def get_theta(key):
+    """
+    Creates theta value for senticircles
+
+    Parameters
+    ----------
+    key : string
+        single word for sentiment
+
+    Returns
+    -------
+    theta : int
+        theta value based on sentiment dictionary
+
+    """
     tagged = nltk.pos_tag([key])
     t = tagged[0][0]
     try:
@@ -56,9 +88,9 @@ def get_theta(key):
         elif 'RB' in tagged[0][1]:
             Scores = swn.senti_synset(t + '.r.01')
         else:
-            return 0
+            return None
     except:
-        return 0
+        return None
 
     if Scores.pos_score() > 0.0:
         return np.pi * Scores.pos_score()
@@ -66,16 +98,18 @@ def get_theta(key):
         return np.pi * Scores.obj_score() * (-1)
 
 def get_xy_coords(radii, theta):
+    """ Convert polar coordinates for sentivectors into x-y coordinates"""
     x_y_coords = {}
-    for term in radii.keys():
+    for term in theta.keys():
         x_y_coords[term] = (radii[term] * math.cos(theta[term]),radii[term] * math.sin(theta[term]))
     return x_y_coords
 
 def get_sentimedian(x_y_coords):
-
+    """ Calculate median of two-deminsional vectors for sentimedian. """
     return np.mean(np.array(list(x_y_coords.values())), axis=0)
 
 def get_sentiment(sentimedian, lambda_neutral):
+    """ Determine categorical sentiment based on lambda neutral value and sentimedian vector. """
     if sentimedian[0] >= 0 and abs(sentimedian[1]) < lambda_neutral:
         return 'neu'
     elif sentimedian[1] > lambda_neutral:
@@ -128,11 +162,16 @@ if __name__ == '__main__':
     99 problem
     """
 
+    data_path = '../../data/'
+    dataset = 'sts' # sts
+    df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
     tweets = [x.split(' ') for x in raw_text.split('\n')]
-
-    key = 'work'
-    radii = get_TDOC(tweets,key)
+    tweets = df['tokens_pos'].apply(lambda x: [i[0] for i in x])
+    key = 'Biden'
+    prohib = []
+    radii = get_TDOC(tweets,key, prohib)
     theta = {context: get_theta(context) for context in radii.keys()}
+    theta = {k : v for k, v in theta.items() if v is not None}
     xy_coords = get_xy_coords(radii, theta)
     sentimedian = get_sentimedian(xy_coords)
     sentiment = get_sentiment(sentimedian, 0.05)
