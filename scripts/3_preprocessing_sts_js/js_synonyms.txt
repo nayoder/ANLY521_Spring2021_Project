@@ -1,0 +1,7 @@
+joe_biden,joseph_biden,@potus,biden,potus,#joebiden,president_biden,#biden,#presidentbiden,@joebiden,joe,biden
+kamala_harris,@VP,harris,@kamalaharris
+nancy_pelosi,@speakerpelosi,speaker_pelosi
+joint_session,#jointsession,#jointaddress,#bidenaddress,#presidentialaddress
+ted_cruz,@tedcruz
+mitch_mcconnell,@leadermcconnell
+tim_scott,@senatortimscott
