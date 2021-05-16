@@ -2,6 +2,7 @@
 # SentiCircles
 # based on code from here - https://github.com/19shubh/Sentiment-Analysis
 # May 17, 2021
+import argparse
 
 import nltk
 import matplotlib.pyplot as plt
@@ -16,8 +17,11 @@ from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_sc
 
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
+# path and class instantiation for processing
+data_path = '../../data/'
 analyzer = SentimentIntensityAnalyzer()
 lemmatizer = nltk.WordNetLemmatizer()
+min_max_scaler = preprocessing.MinMaxScaler()
 
 def get_TDOC(lines, key, prohib):
     """
@@ -141,7 +145,7 @@ def get_sentiment(sentimedian, lambda_neutral):
     elif sentimedian[1] < 0:
         return 'negative'
 
-def create_plot(xy_coords, key, sentiment):
+def create_plot(xy_coords, key, lexicon, sentiment, dataset):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.plot([0, 0], [-1, 1])
@@ -161,93 +165,55 @@ def create_plot(xy_coords, key, sentiment):
     ax.add_artist(plt.Circle((0, 0), 1.0, color='b', fill=False))
     plt.xlabel('Sentiment Strength')
     plt.ylabel('Orientation')
-    plt.title(f'{key} - {sentiment}')
-    plt.savefig(f'../../plots/{dataset}/{key}.png')
+    plt.title(f'{key}-{lexicon}: {sentiment}')
+    plt.savefig(f'../../plots/{dataset}/{key}-{lexicon}.png')
     plt.close(fig)
 
 
-if __name__ == '__main__':
-
-    # TESTING CODE ONLY
-
-    raw_text = """It's a good movie
-    Bad weather cause great problem
-    you have a great smile
-    android is better than ios
-    I am learning sentiment analysis
-    this work is tough
-    its taking a lot of time.
-    mid sems are coming
-    i have to study
-    this work will have a great effect
-    i have to face great problem
-    you have a great smile
-    all of us has problem
-    i like your smile
-    99 problem
+def run_metrics(entities):
     """
-    tweets = [x.split(' ') for x in raw_text.split('\n')]
+    Determine metrics for 3-way sentiment
 
-    data_path = '../../data/'
-    dataset = 'js' # sts
-    prohib = []
-    df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
-    if dataset == 'sts':
-        entities = pd.read_pickle(f'{data_path}{dataset}_labels.pkl')
-        entities = entities[~entities['entity'].isin(['pride_and_prejudice','lung_cancer','trader_joe'])].reset_index(drop=True)
-    elif dataset == 'js':
-        entities = open(f'../3_preprocessing_sts_js/js_synonyms.txt').readlines()
-        entities = pd.DataFrame([x.split(',')[0] for x in entities], columns = ['entity'])
+    Parameters
+    ----------
+    entities : pd.DataFrame
+        Dataframe with entities and their actual and predicted sentiment positive/negative/neutral
 
-    tweets = df['tokens_plain'].tolist()
+    Returns
+    -------
+    None
 
-    entities['sentimedian_x'] = np.nan
-    entities['sentimedian_y'] = np.nan
-    entities['predicted_sentiment'] = ''
-    for i in range(len(entities)):
-        key = entities.loc[i, 'entity']
-
-        radii = get_TDOC(tweets,key, prohib)
-
-        theta = {context: get_theta(context, 'vader') for context in radii.keys()}
-        theta = {k : v for k, v in theta.items() if v is not None}
-        radii = {k : radii[k] for k in theta.keys()}
-        #### normalize radii
-        # norm = preprocessing.normalize(np.array(list(radii.values())).reshape(1,-1)).reshape(1,-1).tolist()[0]
-        min_max_scaler = preprocessing.MinMaxScaler()
-        norm = min_max_scaler.fit_transform(np.array(list(radii.values())).reshape(-1, 1)).reshape(1, -1).tolist()[0]
-        norm_radii = {k: norm[i] for i, k in enumerate(radii.keys())}
-
-        xy_coords = get_xy_coords(norm_radii, theta)
-        sentimedian = get_sentimedian(xy_coords)
-        sentiment = get_sentiment(sentimedian, 0.0001)
-        print(key, sentiment)
-        entities.loc[i, 'sentimedian_x'] = sentimedian[0]
-        entities.loc[i, 'sentimedian_y'] = sentimedian[1]
-        entities.loc[i, 'predicted_sentiment'] = sentiment
-
-        create_plot(xy_coords, key, sentiment) # next add sentimedian and sentiment to the plot
-
-
+    """
     # subjectivity test
-    pred = entities['predicted_sentiment'].isin(['positive','negative'])
-    actual = entities['sentiment'].isin(['positive','negative'])
+    print("--------------------------")
+    print("Subjectivity test (polar sentiment == up condition)")
+
+    pred = entities['predicted_sentiment'].isin(['positive', 'negative'])
+    actual = entities['sentiment'].isin(['positive', 'negative'])
     a = sum(pred == actual) / len(pred)
-    p = precision_score(actual,pred)
+    p = precision_score(actual, pred)
     r = recall_score(actual, pred)
     f1 = f1_score(actual, pred)
     print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
 
+
     # positive test
+
+    print("--------------------------")
+    print("Positive test (positive sentiment == up condition)")
+
     pred = entities['predicted_sentiment'].isin(['positive'])
     actual = entities['sentiment'].isin(['positive'])
     a = sum(pred == actual) / len(pred)
-    p = precision_score(actual,pred)
+    p = precision_score(actual, pred)
     r = recall_score(actual, pred)
     f1 = f1_score(actual, pred)
     print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
 
     # negative test
+
+    print("--------------------------")
+    print("Negative test (negative sentiment == up condition)")
     pred = entities['predicted_sentiment'].isin(['negative'])
     actual = entities['sentiment'].isin(['negative'])
     a = sum(pred == actual) / len(pred)
@@ -255,3 +221,73 @@ if __name__ == '__main__':
     r = recall_score(actual, pred)
     f1 = f1_score(actual, pred)
     print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
+
+
+def construct_senticircle(key, tweets, prohib, lexicon):
+    radii = get_TDOC(tweets, key, prohib)
+    theta = {context: get_theta(context, lexicon) for context in radii.keys()}
+    theta = {k: v for k, v in theta.items() if v is not None}
+    radii = {k: radii[k] for k in theta.keys()}
+    #### normalize radii
+    norm = min_max_scaler.fit_transform(np.array(list(radii.values())).reshape(-1, 1)).reshape(1, -1).tolist()[0]
+    norm_radii = {k: norm[i] for i, k in enumerate(radii.keys())}
+    xy_coords = get_xy_coords(norm_radii, theta)
+    sentimedian = get_sentimedian(xy_coords)
+    sentiment = get_sentiment(sentimedian, 0.0001)
+    print(key, sentiment)
+
+    create_plot(xy_coords, key, lexicon, sentiment, dataset)  # next add sentimedian and sentiment to the plot
+
+    return sentimedian[0], sentimedian[1], sentiment
+
+if __name__ == '__main__':
+
+    # Setting up arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--data', type=str,
+                        default='sts',
+                        help="Dataset that should be analyzed")
+    parser.add_argument('--lexicon', type=str,
+                        default='vader,swn',
+                        help="Lexicon(s) to use for senticircles")
+    parser.add_argument('--prohibited_words', type=str,
+                        default='NA',
+                        help="Prohibited words to not include in context")
+
+    args = parser.parse_known_args()[0]
+
+
+    if args.prohibited_words == 'NA':
+        prohib = []
+    else:
+        prohib = [x.split(',') for x in args.prohibited_words]
+
+    datasets = args.data.split(',')
+    lexicons = args.lexicon.split(',')
+
+
+    for dataset in datasets:
+        for lexicon in lexicons:
+            df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
+            tweets = df['tokens_plain'].tolist()
+            if dataset == 'sts':
+                entities = pd.read_pickle(f'{data_path}{dataset}_labels.pkl')
+                entities = entities[~entities['entity'].isin(['pride_and_prejudice','lung_cancer','trader_joe'])].reset_index(drop=True)
+            elif dataset == 'js':
+                entities = open(f'../3_preprocessing_sts_js/js_synonyms.txt').readlines()
+                entities = pd.DataFrame([x.split(',')[0] for x in entities], columns = ['entity'])
+            else:
+                raise AssertionError("Only sts and js datasets are supported")
+
+            entities['sentimedian_x'] = np.nan
+            entities['sentimedian_y'] = np.nan
+            entities['predicted_sentiment'] = ''
+
+            for i in range(len(entities)):
+                x, y, s = construct_senticircle(entities.loc[i, 'entity'], tweets, prohib, lexicon)
+
+                entities.loc[i, 'sentimedian_x'] = x
+                entities.loc[i, 'sentimedian_y'] = y
+                entities.loc[i, 'predicted_sentiment'] = s
+
+            run_metrics(entities)
