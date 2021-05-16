@@ -259,7 +259,7 @@ def pp_sts(sts_ents):
     sts_df = sts_df[sts_df['id'].isin(sts_entity['tweet_id'].tolist())].reset_index(drop = True)
 
     # create tokens from raw text, deal with bigrams, and apply synonyms
-    sts_df['sts_tokens_plain'], sts_df['sts_tokens_pos'] = preprocess(sts_df['text'], sts_ents, bigram_entities, synonym_entities = None)
+    sts_df['tokens_plain'], sts_df['tokens_pos'] = preprocess(sts_df['text'], sts_ents, bigram_entities, synonym_entities = None)
 
     # Writing to CSV
     sts_df.to_pickle(data_path + 'sts_tokenized.pkl')
