@@ -53,8 +53,7 @@ The following files (located in `scripts/3_preprocessing_sts_js/` unless otherwi
 Usage of the `preprocessing.py` script is as follows:
 
 For the evaluation dataset:
-`python preprocessing.py --data sts --usernames_file sts_usernames.txt --bigrams_file sts_bigrams.txt --synonyms_file None`
-ANDERSON, DOES STS USE A BIGRAMS FILE?
+`python preprocessing.py --data sts --usernames_file sts_usernames.txt --bigrams_file None --synonyms_file None`
 
 For the experimental dataset:
 `python preprocessing.py --data js --usernames_file js_usernames.txt --bigrams_file js_bigrams.txt --synonyms_file js_synonyms.txt`
