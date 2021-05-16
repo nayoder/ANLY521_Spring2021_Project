@@ -1,3 +1,13 @@
-python-dotenv
+argparse
+demoji
+math
+matplotlib
+nltk
+numpy
+os
 pandas
+python-dotenv
+re
+sklearn
+turtle
 tweepy

@@ -78,6 +78,6 @@ Lexicons used:
 |---------------------------------------------- | ------------------- |
 |`.gitignore`                                   | Lists files that should be ignored by git |
 |`README.md`                                    | This markdown document |
-|`requirements.txt`                             | Lists packages needed to run the scripts |
+|`requirements.txt`                             | Lists all of the libraries needed to run the scripts |
 |`Entity-Based Sentiment Analysis on Tweets.pdf`| PDF of our presentation slides |
 |`WHATEVER PDF FILE WE USE FOR OUR PAPER`       | PDF of our paper |
