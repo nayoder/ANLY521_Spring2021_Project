@@ -248,6 +248,8 @@ def pp_sts(sts_ents):
             return 'positive'
         elif x['#negative'] > x['#positive']:
             return 'negative'
+        elif x['#negative'] == x['#positive']:
+            return 'neutral'
 
     sts_entity_agg['sentiment'] = sts_entity_agg.apply(lambda x: determine_sentiment(x), axis = 1)
     sts_entity_agg = sts_entity_agg[['entity','sentiment']]
