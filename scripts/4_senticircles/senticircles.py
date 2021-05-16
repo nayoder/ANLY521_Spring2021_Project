@@ -14,6 +14,9 @@ from sklearn import preprocessing
 import pandas as pd
 from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
 
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
+
+analyzer = SentimentIntensityAnalyzer()
 lemmatizer = nltk.WordNetLemmatizer()
 
 def get_TDOC(lines, key, prohib):
@@ -56,16 +59,10 @@ def get_TDOC(lines, key, prohib):
     if len(radii) == 0:
         raise AssertionError(f'No context terms found for key: {key}')
 
-    #### normalize
-    #norm = preprocessing.normalize(np.array(list(radii.values())).reshape(1,-1)).reshape(1,-1).tolist()[0]
-    min_max_scaler = preprocessing.MinMaxScaler()
-    norm = min_max_scaler.fit_transform(np.array(list(radii.values())).reshape(-1,1)).reshape(1,-1).tolist()[0]
-    norm_radii = {k:norm[i] for i, k in enumerate(radii.keys())}
-
-    return norm_radii  # Returns entire set of context terms related to key
+    return radii  # Returns entire set of context terms related to key
 
 
-def get_theta(key):
+def get_theta(key, lexicon):
     """
     Creates theta value for senticircles
 
@@ -73,6 +70,8 @@ def get_theta(key):
     ----------
     key : string
         single word for sentiment
+    lexicon : string
+        choice for lexicon to use
 
     Returns
     -------
@@ -82,36 +81,44 @@ def get_theta(key):
     """
     tagged = nltk.pos_tag([key])
     t = tagged[0][0]
-    score = get_score(t, tagged)
-    if score is None:
-        tagged = nltk.pos_tag([key])
-        t = tagged[0][0]
-        score = get_score(t, tagged)
-    return
+    score = get_score(t, tagged, lexicon)
+    # if score is None:
+    #     tagged = nltk.pos_tag([key])
+    #     t = tagged[0][0]
+    #     score = get_score(t, tagged)
+    return score
 
 
-def get_score(t, tagged):
-    try:
-        if 'NN' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.n.01')
-        elif 'NNS' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.nns.01')
-        elif 'VB' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.v.01')
-        elif 'VBG' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.v.01')
-        elif 'JJ' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.a.01')
-        elif 'RB' in tagged[0][1]:
-            Scores = swn.senti_synset(t + '.r.01')
-        else:
+def get_score(t, tagged, lexicon):
+
+    if lexicon == 'swn':
+        try:
+            if 'NN' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.n.01')
+            elif 'NNS' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.nns.01')
+            elif 'VB' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.v.01')
+            elif 'VBG' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.v.01')
+            elif 'JJ' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.a.01')
+            elif 'RB' in tagged[0][1]:
+                Scores = swn.senti_synset(t + '.r.01')
+            else:
+                return None
+        except:
             return None
-    except:
-        return None
-    if Scores.pos_score() > 0.0:
-        return np.pi * Scores.pos_score()
-    else:
-        return np.pi * Scores.obj_score() * (-1)
+        if Scores.pos_score() > 0.0:
+            return np.pi * Scores.pos_score()
+        elif Scores.neg_score() > 0.0:
+            return - np.pi * Scores.neg_score()
+        else:
+            return 0
+
+    elif lexicon == 'vader':
+        return analyzer.polarity_scores(t)['compound']
+
 
 
 def get_xy_coords(radii, theta):
@@ -134,7 +141,7 @@ def get_sentiment(sentimedian, lambda_neutral):
     elif sentimedian[1] < 0:
         return 'negative'
 
-def create_plot(xy_coords, key):
+def create_plot(xy_coords, key, sentiment):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     plt.plot([0, 0], [-1, 1])
@@ -154,8 +161,9 @@ def create_plot(xy_coords, key):
     ax.add_artist(plt.Circle((0, 0), 1.0, color='b', fill=False))
     plt.xlabel('Sentiment Strength')
     plt.ylabel('Orientation')
-    plt.title(key)
-    return plt
+    plt.title(f'{key} - {sentiment}')
+    plt.savefig(f'../../plots/{dataset}/{key}.png')
+    plt.close(fig)
 
 
 if __name__ == '__main__':
@@ -181,11 +189,16 @@ if __name__ == '__main__':
     tweets = [x.split(' ') for x in raw_text.split('\n')]
 
     data_path = '../../data/'
-    dataset = 'sts' # sts
+    dataset = 'js' # sts
     prohib = []
     df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
-    entities = pd.read_pickle(f'{data_path}{dataset}_labels.pkl')
-    entities = entities[~entities['entity'].isin(['pride_and_prejudice','lung_cancer','trader_joe'])].reset_index(drop=True)
+    if dataset == 'sts':
+        entities = pd.read_pickle(f'{data_path}{dataset}_labels.pkl')
+        entities = entities[~entities['entity'].isin(['pride_and_prejudice','lung_cancer','trader_joe'])].reset_index(drop=True)
+    elif dataset == 'js':
+        entities = open(f'../3_preprocessing_sts_js/js_synonyms.txt').readlines()
+        entities = pd.DataFrame([x.split(',')[0] for x in entities], columns = ['entity'])
+
     tweets = df['tokens_plain'].tolist()
 
     entities['sentimedian_x'] = np.nan
@@ -196,17 +209,24 @@ if __name__ == '__main__':
 
         radii = get_TDOC(tweets,key, prohib)
 
-        theta = {context: get_theta(context) for context in radii.keys()}
+        theta = {context: get_theta(context, 'vader') for context in radii.keys()}
         theta = {k : v for k, v in theta.items() if v is not None}
-        xy_coords = get_xy_coords(radii, theta)
+        radii = {k : radii[k] for k in theta.keys()}
+        #### normalize radii
+        # norm = preprocessing.normalize(np.array(list(radii.values())).reshape(1,-1)).reshape(1,-1).tolist()[0]
+        min_max_scaler = preprocessing.MinMaxScaler()
+        norm = min_max_scaler.fit_transform(np.array(list(radii.values())).reshape(-1, 1)).reshape(1, -1).tolist()[0]
+        norm_radii = {k: norm[i] for i, k in enumerate(radii.keys())}
+
+        xy_coords = get_xy_coords(norm_radii, theta)
         sentimedian = get_sentimedian(xy_coords)
-        sentiment = get_sentiment(sentimedian, 0.05)
+        sentiment = get_sentiment(sentimedian, 0.0001)
         print(key, sentiment)
         entities.loc[i, 'sentimedian_x'] = sentimedian[0]
         entities.loc[i, 'sentimedian_y'] = sentimedian[1]
         entities.loc[i, 'predicted_sentiment'] = sentiment
-        plot_out = create_plot(xy_coords, key) # next add sentimedian and sentiment to the plot
-        plot_out.savefig(f'../../plots/{i}.png')
+
+        create_plot(xy_coords, key, sentiment) # next add sentimedian and sentiment to the plot
 
 
     # subjectivity test
