@@ -20,3 +20,12 @@ A couple of notes:
 - The `num_tweets` argument allows you to cut off the search after a given number of tweets, but the default `None` results in all of the tweets being collected
 - This script takes a long time to run because the Twitter API rate limits it every 2700 or so tweets, and then it sleeps for ~12 minutes before starting again.
 - You can use `Ctrl-C` to interrupt the search and still save what data you collected so far.
+
+
+Usage of `preprocessing.py` script is as follows:
+
+For the evaluation dataset:
+`python preprocessing.py --data sts --usernames_file sts_usernames.txt --bigrams_file sts_bigrams.txt --synonyms_file None`
+
+For the experimental dataset:
+`python preprocessing.py --data js --usernames_file js_usernames.txt --bigrams_file js_bigrams.txt --synonyms_file js_synonyms.txt`
