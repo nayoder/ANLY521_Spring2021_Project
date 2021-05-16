@@ -12,6 +12,9 @@ import numpy as np
 import turtle
 from sklearn import preprocessing
 import pandas as pd
+from sklearn.metrics import f1_score, accuracy_score, precision_score, recall_score
+
+lemmatizer = nltk.WordNetLemmatizer()
 
 def get_TDOC(lines, key, prohib):
     """
@@ -50,8 +53,13 @@ def get_TDOC(lines, key, prohib):
     #### Radius ... TDOC = f(ci,m) * log(N/Nci)
     radii = {term : freq[term] * (log(N / Nci[term])) for term in freq.keys()}
 
+    if len(radii) == 0:
+        raise AssertionError(f'No context terms found for key: {key}')
+
     #### normalize
-    norm = preprocessing.normalize(np.array(list(radii.values())).reshape(1,-1)).reshape(1,-1).tolist()[0]
+    #norm = preprocessing.normalize(np.array(list(radii.values())).reshape(1,-1)).reshape(1,-1).tolist()[0]
+    min_max_scaler = preprocessing.MinMaxScaler()
+    norm = min_max_scaler.fit_transform(np.array(list(radii.values())).reshape(-1,1)).reshape(1,-1).tolist()[0]
     norm_radii = {k:norm[i] for i, k in enumerate(radii.keys())}
 
     return norm_radii  # Returns entire set of context terms related to key
@@ -74,6 +82,15 @@ def get_theta(key):
     """
     tagged = nltk.pos_tag([key])
     t = tagged[0][0]
+    score = get_score(t, tagged)
+    if score is None:
+        tagged = nltk.pos_tag([key])
+        t = tagged[0][0]
+        score = get_score(t, tagged)
+    return
+
+
+def get_score(t, tagged):
     try:
         if 'NN' in tagged[0][1]:
             Scores = swn.senti_synset(t + '.n.01')
@@ -91,11 +108,11 @@ def get_theta(key):
             return None
     except:
         return None
-
     if Scores.pos_score() > 0.0:
         return np.pi * Scores.pos_score()
     else:
         return np.pi * Scores.obj_score() * (-1)
+
 
 def get_xy_coords(radii, theta):
     """ Convert polar coordinates for sentivectors into x-y coordinates"""
@@ -110,12 +127,12 @@ def get_sentimedian(x_y_coords):
 
 def get_sentiment(sentimedian, lambda_neutral):
     """ Determine categorical sentiment based on lambda neutral value and sentimedian vector. """
-    if sentimedian[0] >= 0 and abs(sentimedian[1]) < lambda_neutral:
-        return 'neu'
-    elif sentimedian[1] > lambda_neutral:
-        return 'pos'
-    elif sentimedian[1] < - lambda_neutral:
-        return 'neg'
+    if abs(sentimedian[1]) < lambda_neutral: #sentimedian[0] > 0 and
+        return 'neutral'
+    elif sentimedian[1] > 0:
+        return 'positive'
+    elif sentimedian[1] < 0:
+        return 'negative'
 
 def create_plot(xy_coords, key):
     fig = plt.figure()
@@ -161,18 +178,60 @@ if __name__ == '__main__':
     i like your smile
     99 problem
     """
+    tweets = [x.split(' ') for x in raw_text.split('\n')]
 
     data_path = '../../data/'
     dataset = 'sts' # sts
-    df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
-    tweets = [x.split(' ') for x in raw_text.split('\n')]
-    tweets = df['tokens_pos'].apply(lambda x: [i[0] for i in x])
-    key = 'Biden'
     prohib = []
-    radii = get_TDOC(tweets,key, prohib)
-    theta = {context: get_theta(context) for context in radii.keys()}
-    theta = {k : v for k, v in theta.items() if v is not None}
-    xy_coords = get_xy_coords(radii, theta)
-    sentimedian = get_sentimedian(xy_coords)
-    sentiment = get_sentiment(sentimedian, 0.05)
-    create_plot(xy_coords, key).show() # next add sentimedian and sentiment to the plot
+    df = pd.read_pickle(f'{data_path}{dataset}_tokenized.pkl')
+    entities = pd.read_pickle(f'{data_path}{dataset}_labels.pkl')
+    entities = entities[~entities['entity'].isin(['pride_and_prejudice','lung_cancer','trader_joe'])].reset_index(drop=True)
+    tweets = df['tokens_plain'].tolist()
+
+    entities['sentimedian_x'] = np.nan
+    entities['sentimedian_y'] = np.nan
+    entities['predicted_sentiment'] = ''
+    for i in range(len(entities)):
+        key = entities.loc[i, 'entity']
+
+        radii = get_TDOC(tweets,key, prohib)
+
+        theta = {context: get_theta(context) for context in radii.keys()}
+        theta = {k : v for k, v in theta.items() if v is not None}
+        xy_coords = get_xy_coords(radii, theta)
+        sentimedian = get_sentimedian(xy_coords)
+        sentiment = get_sentiment(sentimedian, 0.05)
+        print(key, sentiment)
+        entities.loc[i, 'sentimedian_x'] = sentimedian[0]
+        entities.loc[i, 'sentimedian_y'] = sentimedian[1]
+        entities.loc[i, 'predicted_sentiment'] = sentiment
+        plot_out = create_plot(xy_coords, key) # next add sentimedian and sentiment to the plot
+        plot_out.savefig(f'../../plots/{i}.png')
+
+
+    # subjectivity test
+    pred = entities['predicted_sentiment'].isin(['positive','negative'])
+    actual = entities['sentiment'].isin(['positive','negative'])
+    a = sum(pred == actual) / len(pred)
+    p = precision_score(actual,pred)
+    r = recall_score(actual, pred)
+    f1 = f1_score(actual, pred)
+    print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
+
+    # positive test
+    pred = entities['predicted_sentiment'].isin(['positive'])
+    actual = entities['sentiment'].isin(['positive'])
+    a = sum(pred == actual) / len(pred)
+    p = precision_score(actual,pred)
+    r = recall_score(actual, pred)
+    f1 = f1_score(actual, pred)
+    print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
+
+    # negative test
+    pred = entities['predicted_sentiment'].isin(['negative'])
+    actual = entities['sentiment'].isin(['negative'])
+    a = sum(pred == actual) / len(pred)
+    p = precision_score(actual, pred)
+    r = recall_score(actual, pred)
+    f1 = f1_score(actual, pred)
+    print(f"Logistic scores:\naccuracy {a:0.03}\nprecision {p:0.03}\nrecall {r:0.03}\nF1 score {f1:0.03}\n\n")
