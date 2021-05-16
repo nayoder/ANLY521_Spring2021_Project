@@ -64,8 +64,14 @@ The `scripts/3_senticircles/senticircles.py` script was used to ANDERSON WRITE D
 
 Usage of the `senticircles.py` script is as follows:
 
-ANDERSON FILL OUT USAGE
+`python preprocessing.py --data sts,js --lexicon swn,vader`
 
+Lexicons used:
+
+|Parameter|Lexicon|Description|
+|---------- | ------------------- | ------------------- |
+|`swn`|SentiWordNet|Micro-word opinion lexicon based on part of speech tagging|
+|`vader`|Valence Aware Dictionary and sEntiment Reasoner| Social media lexicon sentiment tool|
 
 ### Miscellaneous
 |File                                           | Description         |
