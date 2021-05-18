@@ -1,6 +1,17 @@
 # Entity-based Sentiment Analysis on Tweets
 ##### Anderson Monken and Nicole Yoder
 
+This repository is a method adapted from Saif et. al (2014, 2016) to conduct entity-level sentiment analysis using the SentiCircle method.
+The method is applied to both an evaluation dataset (STS-Gold) and an experimental dataset from Joe Biden's joint address to Congress on April 28, 2021.
+
+Rather than sentiment being positive or negative, sentiment is plotted on polar coordinates, 
+with the radius determined by the term degree of correlation
+and the angle (θ) determined by a sentiment lexicon. Figure 1 below shows an example of a SentiCircle for Nancy Pelosi, who is predicted to have positive sentiment in the experimental tweet corpus.
+
+![](plots/js/nancy_pelosi-vader.png)
+
+See [Saif et. al (2016)](https://www.sciencedirect.com/science/article/pii/S0306457315000242) for more information on the SentiCircle method. See our accompanying paper [here]() to read about our work.
+
 Here is a description of all the files in this repository in the order that they should be used.
 
 ### 1. Scraping Twitter
