@@ -93,5 +93,5 @@ Lexicons used:
 |`.gitignore`                                   | Lists files that should be ignored by git |
 |`README.md`                                    | This markdown document |
 |`requirements.txt`                             | Lists all of the libraries needed to run the scripts |
-|`Entity-Based Sentiment Analysis on Tweets.pdf`| PDF of our presentation slides |
-|`Monken, Yoder -- Entity-Based Sentiment Analysis on Tweets`       | PDF of our paper |
+|`Presentation - Entity-Based Sentiment Analysis on Tweets.pdf`| PDF of our presentation slides |
+|`Paper - Entity-Based Sentiment Analysis on Tweets.pdf`       | PDF of our paper |
