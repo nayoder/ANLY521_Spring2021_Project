@@ -71,7 +71,10 @@ For the experimental dataset:
 
 
 ### 4. SentiCircles
-The `scripts/3_senticircles/senticircles.py` script was used to ANDERSON WRITE DESCRIPTION. Plots of each entity's senticircle can be found in `plots/js/` or `plots/sts`.
+The `scripts/3_senticircles/senticircles.py` script was used to construct the SentiCircles
+for all the specified entities, produce a categorical sentiment, and plot each entity's SentiCircle to visualize context terms.
+
+Plots of each entity's SentiCircle can be found in `plots/js/` or `plots/sts`.
 
 Usage of the `senticircles.py` script is as follows:
 
@@ -91,4 +94,4 @@ Lexicons used:
 |`README.md`                                    | This markdown document |
 |`requirements.txt`                             | Lists all of the libraries needed to run the scripts |
 |`Entity-Based Sentiment Analysis on Tweets.pdf`| PDF of our presentation slides |
-|`WHATEVER PDF FILE WE USE FOR OUR PAPER`       | PDF of our paper |
+|`Monken, Yoder -- Entity-Based Sentiment Analysis on Tweets`       | PDF of our paper |
