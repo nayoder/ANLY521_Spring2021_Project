@@ -6,9 +6,9 @@ The method is applied to both an evaluation dataset (STS-Gold) and an experiment
 
 Rather than sentiment being positive or negative, sentiment is plotted on polar coordinates, 
 with the radius determined by the term degree of correlation
-and the angle (θ) determined by a sentiment lexicon. Figure 1 below shows an example of a SentiCircle for Nancy Pelosi, who is predicted to have positive sentiment in the experimental tweet corpus.
+and the angle (θ) determined by a sentiment lexicon. Figure 1 below shows an example of a SentiCircle for Nancy Pelosi, who is predicted to have neutral sentiment in the experimental tweet corpus using the SentiWordNet lexicon.
 
-![](plots/js/nancy_pelosi-vader.png)
+![](plots/js/nancy_pelosi-swn.png)
 
 See [Saif et. al (2016)](https://www.sciencedirect.com/science/article/pii/S0306457315000242) for more information on the SentiCircle method. See our accompanying paper [here]() to read about our work.
 
