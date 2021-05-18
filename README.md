@@ -73,6 +73,8 @@ For the experimental dataset:
 ### 4. SentiCircles
 The `scripts/3_senticircles/senticircles.py` script was used to construct the SentiCircles
 for all the specified entities, produce a categorical sentiment, and plot each entity's SentiCircle to visualize context terms.
+The angle and radius calculations to construct the SentiCircles and the plots are based on the work from https://github.com/19shubh/Sentiment-Analysis.
+We thank them for sharing their code publicly.
 
 Plots of each entity's SentiCircle can be found in `plots/js/` or `plots/sts`.
 
@@ -80,12 +82,15 @@ Usage of the `senticircles.py` script is as follows:
 
 `python preprocessing.py --data sts,js --lexicon swn,vader`
 
+The script can handle a single or multiple datasets as well as a single or multiple lexicons. 
+New datasets or lexicons will require additional code tweaks.
+
 Lexicons used:
 
-|Parameter|Lexicon|Description|
-|---------- | ------------------- | ------------------- |
-|`swn`|SentiWordNet|Micro-word opinion lexicon based on part of speech tagging|
-|`vader`|Valence Aware Dictionary and sEntiment Reasoner| Social media lexicon sentiment tool|
+|Parameter|Lexicon|Description| λ value|
+|---------- | ------------------- | ------------------- | ----|
+|`swn`|SentiWordNet|Micro-word opinion lexicon based on part of speech tagging|0.05|
+|`vader`|Valence Aware Dictionary and sEntiment Reasoner| Social media lexicon sentiment tool|0.0001|
 
 ### Miscellaneous
 |File                                           | Description         |
