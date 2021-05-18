@@ -1,6 +1,6 @@
 # Monken and Yoder
 # SentiCircles
-# based on code from here - https://github.com/19shubh/Sentiment-Analysis
+# adapted from code from here - https://github.com/19shubh/Sentiment-Analysis
 # May 17, 2021
 import argparse
 
@@ -296,13 +296,14 @@ if __name__ == '__main__':
                 entities.loc[i, 'sentimedian_y'] = y
                 entities.loc[i, 'predicted_sentiment'] = s
 
-            print("==========================")
-            print("==========================")
-            print("==========================")
-            print(f"DATASET - {dataset}")
-            print(f"LEXICON - {lexicon}")
-            run_metrics(entities)
+            if dataset == 'sts':
+                print("==========================")
+                print("==========================")
+                print("==========================")
+                print(f"DATASET - {dataset}")
+                print(f"LEXICON - {lexicon}")
+                run_metrics(entities)
 
-            print("==========================")
-            print("==========================")
-            print("==========================")
+                print("==========================")
+                print("==========================")
+                print("==========================")
