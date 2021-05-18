@@ -146,7 +146,7 @@ def get_sentiment(sentimedian, lambda_neutral):
         return 'negative'
 
 def create_plot(xy_coords, key, lexicon, sentiment, dataset):
-    fig = plt.figure()
+    fig = plt.figure(figsize=(6, 5))
     ax = fig.add_subplot(111)
     plt.plot([0, 0], [-1, 1])
     plt.plot([-1, 1], [0, 0])
@@ -233,7 +233,13 @@ def construct_senticircle(key, tweets, prohib, lexicon):
     norm_radii = {k: norm[i] for i, k in enumerate(radii.keys())}
     xy_coords = get_xy_coords(norm_radii, theta)
     sentimedian = get_sentimedian(xy_coords)
-    sentiment = get_sentiment(sentimedian, 0.0001)
+
+    if lexicon == 'swn':
+        threshold = 0.05
+    elif lexicon == 'vader':
+        threshold = 0.0001
+
+    sentiment = get_sentiment(sentimedian, threshold)
     print(key, sentiment)
 
     create_plot(xy_coords, key, lexicon, sentiment, dataset)  # next add sentimedian and sentiment to the plot
@@ -290,4 +296,13 @@ if __name__ == '__main__':
                 entities.loc[i, 'sentimedian_y'] = y
                 entities.loc[i, 'predicted_sentiment'] = s
 
+            print("==========================")
+            print("==========================")
+            print("==========================")
+            print(f"DATASET - {dataset}")
+            print(f"LEXICON - {lexicon}")
             run_metrics(entities)
+
+            print("==========================")
+            print("==========================")
+            print("==========================")
